@@ -50,11 +50,11 @@ public class ClientConsole implements ChatIF
    * @param host The host to connect to.
    * @param port The port to connect on.
    */
-  public ClientConsole(String host, int port) 
+  public ClientConsole(String loginId, String host, int port) 
   {
     try 
     {
-      client= new ChatClient(host, port, this);
+      client= new ChatClient(loginId, host, port, this);
       
       
     } 
@@ -104,7 +104,7 @@ public class ClientConsole implements ChatIF
    */
   public void display(String message) 
   {
-    System.out.println("> " + message);
+    System.out.println(message);
   }
 
   
@@ -118,17 +118,51 @@ public class ClientConsole implements ChatIF
   public static void main(String[] args) 
   {
     String host = "";
-
+    int port = 0;
+    String loginId;
+    
+    try {
+    	loginId = args[0];
+    }
+    catch(ArrayIndexOutOfBoundsException e)
+    {
+    	System.out.print("No login ID specified. Connection aborted.");
+    	System.exit(0);
+    	// redundant but fixes warning in IDE
+    	return;
+    }
 
     try
     {
-      host = args[0];
+      host = args[1];
     }
     catch(ArrayIndexOutOfBoundsException e)
     {
       host = "localhost";
     }
-    ClientConsole chat= new ClientConsole(host, DEFAULT_PORT);
+    
+    try
+    {
+      port = Integer.parseInt(args[2]);
+      
+      if(port < 0 || port > 9999)
+      {
+    	  throw new NumberFormatException();
+      }
+      
+    }
+    catch(ArrayIndexOutOfBoundsException e)
+    {
+      System.out.println("No port provided. Using DEFAULT_PORT = " + DEFAULT_PORT);
+      port = DEFAULT_PORT;
+    }
+    catch(NumberFormatException e)
+    {
+    	System.out.println("Invalid port provided. Port must be an integer less than 9999. "
+    			+ "Using DEFAULT_PORT = " + DEFAULT_PORT);
+    	port = DEFAULT_PORT;
+    }
+    ClientConsole chat= new ClientConsole(loginId, host, port);
     chat.accept();  //Wait for console data
   }
 }

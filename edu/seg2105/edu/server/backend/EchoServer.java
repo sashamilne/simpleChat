@@ -4,7 +4,10 @@ package edu.seg2105.edu.server.backend;
 // license found at www.lloseng.com 
 
 
+import java.io.IOException;
+
 import ocsf.server.*;
+
 
 /**
  * This class overrides some of the methods in the abstract 
@@ -24,6 +27,8 @@ public class EchoServer extends AbstractServer
    */
   final public static int DEFAULT_PORT = 5555;
   
+  private boolean serverActive;
+  
   //Constructors ****************************************************
   
   /**
@@ -34,6 +39,7 @@ public class EchoServer extends AbstractServer
   public EchoServer(int port) 
   {
     super(port);
+    
   }
 
   
@@ -48,9 +54,48 @@ public class EchoServer extends AbstractServer
   public void handleMessageFromClient
     (Object msg, ConnectionToClient client)
   {
-    System.out.println("Message received: " + msg + " from " + client);
-    this.sendToAllClients(msg);
+    
+	
+
+	  
+	System.out.println("Message received: " + msg + " from " + client.getInfo("loginid"));
+    
+    
+    try
+	{
+		String message = (String)msg;
+		if(message.startsWith("#login"))
+		{
+			String[] words = message.split(" ");
+			if (client.getInfo("loginid") == null) {
+				client.setInfo("loginid", words[1]);
+				System.out.println("User " + client.getInfo("loginid") + " has logged on.");
+				this.sendToAllClients(client.getInfo("loginid") + " has logged on.");
+			}
+			else
+			{
+				client.close();
+			}
+			return;
+		}
+		
+	}
+	// should never occur
+    catch(ClassCastException e)
+	{
+		System.out.println(e.getMessage());
+	}
+	catch(ArrayIndexOutOfBoundsException e)
+	{
+		System.out.println("No login id provided");
+		return;
+	}
+	catch(IOException e) { return; }
+    
+    this.sendToAllClients(client.getInfo("loginid") + "> " + msg);
   }
+  
+  
     
   /**
    * This method overrides the one in the superclass.  Called
@@ -60,6 +105,7 @@ public class EchoServer extends AbstractServer
   {
     System.out.println
       ("Server listening for connections on port " + getPort());
+    serverActive = true;
   }
   
   /**
@@ -70,10 +116,33 @@ public class EchoServer extends AbstractServer
   {
     System.out.println
       ("Server has stopped listening for connections.");
+    serverActive = false;
+  }
+  
+  public boolean serverActive()
+  {
+	  return serverActive;
+  }
+  
+  @Override
+  synchronized protected void clientDisconnected(
+			ConnectionToClient client) {
+	  
+	  System.out.println("Client " + client.getInfo("loginid") + " disconnected");
+	 
+  }
+  
+  @Override
+  synchronized protected void clientException(
+			ConnectionToClient client, Throwable exception) {
+	  
+	  System.out.println("Client " + client.getInfo("loginid") + " disconnected");
+	  
+	 
   }
   
   
-  //Class methods ***************************************************
+//Class methods ***************************************************
   
   /**
    * This method is responsible for the creation of 
@@ -105,6 +174,11 @@ public class EchoServer extends AbstractServer
     {
       System.out.println("ERROR - Could not listen for clients!");
     }
+    ServerConsole serverConsole = new ServerConsole(sv);
+    serverConsole.accept();
   }
+  
+  
+
 }
 //End of EchoServer class
