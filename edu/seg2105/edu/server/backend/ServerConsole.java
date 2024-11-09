@@ -76,7 +76,6 @@ public class ServerConsole implements ChatIF {
 			System.exit(0);
 			break;
 		case "stop":
-			server.sendToAllClients("The server has been shut down");
 			server.stopListening();
 			display("Server has stopped listening");
 			break;
